@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Button from "@atlaskit/button/new";
 import TextField from "@atlaskit/textfield";
 import SectionMessage from "@atlaskit/section-message";
 import { Inline, Stack, Text } from "@atlaskit/primitives";
+import { auth0Enabled } from "../../api/auth-mode";
+import { AuthControls } from "./AuthControls";
 import { configuredOrigin, verifyConnection } from "../../api/client";
 import { useConnection } from "../../app/Connection";
 import { useMessage } from "../../i18n/messages";
@@ -11,6 +13,30 @@ import { ErrorNotice } from "../../ui/Feedback";
 import { PageShell } from "../../ui/PageShell";
 
 export default function Connect() {
+  return auth0Enabled() ? <AuthConnect /> : <LegacyConnect />;
+}
+
+function AuthConnect() {
+  const m = useMessage();
+  const [params] = useSearchParams();
+  const { session, changeSession } = useConnection();
+  const navigate = useNavigate();
+  return <PageShell title="connect"><div className="connect-form panel">
+    <Stack space="space.200">
+      {session.kind !== "connected" && <Text>{m("authConnect")}</Text>}
+      {params.get("auth") === "failed" && <SectionMessage appearance="error"><Text>{m("authFailed")}</Text></SectionMessage>}
+      <Inline space="space.100" shouldWrap>
+        <AuthControls />
+        {session.kind !== "connected" && <Button appearance="subtle" onClick={() => {
+          changeSession({ kind: "sample" });
+          navigate("/", { replace: true });
+        }}>{m("sampleOpen")}</Button>}
+      </Inline>
+    </Stack>
+  </div></PageShell>;
+}
+
+function LegacyConnect() {
   const { changeSession } = useConnection();
   const m = useMessage();
   const navigate = useNavigate();

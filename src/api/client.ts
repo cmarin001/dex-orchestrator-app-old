@@ -1,3 +1,4 @@
+import { auth0Enabled, sessionExpired } from "./auth-mode";
 import { sampleResponse } from "./sample";
 
 export class ApiError extends Error {
@@ -7,13 +8,14 @@ export class ApiError extends Error {
   }
 }
 
-type Session = { kind: "sample" } | { kind: "connect" } | { kind: "connected"; origin: string; token: string };
+type Session = { kind: "sample" } | { kind: "connect" } | { kind: "connected"; origin: string; token?: string };
 const connectionView = "dex-connection-view";
-let session: Session = { kind: sessionStorage.getItem(connectionView) ? "connect" : "sample" };
+let session: Session = { kind: !auth0Enabled() && typeof sessionStorage !== "undefined" && sessionStorage.getItem(connectionView) ? "connect" : "sample" };
 
 export const getSession = () => session;
 export const setSession = (value: Session) => {
   session = value;
+  if (auth0Enabled()) return;
   if (value.kind === "sample") sessionStorage.removeItem(connectionView);
   else sessionStorage.setItem(connectionView, "connect");
 };
@@ -32,19 +34,23 @@ export function validateOrigin(input: string) {
 }
 
 async function send(path: string, init: RequestInit = {}, credentials = session) {
-  if (credentials.kind !== "connected" || !credentials.token) throw new ApiError(0, "missing_token");
-  const url = new URL(path, credentials.origin);
-  if (url.origin !== credentials.origin || !path.startsWith("/")) throw new ApiError(0, "invalid_origin");
+  if (credentials.kind !== "connected" || (!auth0Enabled() && !credentials.token)) throw new ApiError(0, "missing_token");
+  const origin = auth0Enabled() ? window.location.origin : credentials.origin;
+  const url = new URL(path, origin);
+  if (url.origin !== origin || !path.startsWith("/")) throw new ApiError(0, "invalid_origin");
   const headers = new Headers(init.headers);
-  headers.set("Authorization", "Bearer " + credentials.token);
+  headers.delete("Authorization");
+  if (auth0Enabled() && init.method === "POST") headers.set("X-Dex-CSRF", "1");
+  if (!auth0Enabled()) headers.set("Authorization", "Bearer " + credentials.token);
   if (init.body) headers.set("Content-Type", "application/json");
   let response: Response;
-  try { response = await fetch(url, { ...init, headers, redirect: "error", cache: "no-store", credentials: "omit" }); }
+  try { response = await fetch(url, { ...init, headers, redirect: "error", cache: "no-store", credentials: auth0Enabled() ? "same-origin" : "omit" }); }
   catch (error) {
     if (init.signal?.aborted) throw error;
     throw new ApiError(0, "network");
   }
   if (!response.ok) {
+    if (auth0Enabled() && response.status === 401) window.dispatchEvent(new Event(sessionExpired));
     const body = await response.json().catch(() => null);
     let submittedId: string | undefined;
     if (response.status === 409 && typeof init.body === "string") {
@@ -58,6 +64,7 @@ async function send(path: string, init: RequestInit = {}, credentials = session)
 }
 
 export async function verifyConnection(origin: string, token: string, signal?: AbortSignal) {
+  if (auth0Enabled()) throw new ApiError(0, "legacy_auth_disabled");
   const credentials: Session = { kind: "connected", origin: validateOrigin(origin), token: token.trim() };
   const response = await send("/api/v1/health", { signal }, credentials);
   const body = await response.json().catch(() => null);

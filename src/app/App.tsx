@@ -12,6 +12,8 @@ import { useHealth } from "../api/queries";
 import { CommandProvider } from "../api/mutations";
 import { StatusLozenge } from "../ui/StatusLozenge";
 import { ErrorBoundary, Loading } from "../ui/Feedback";
+import { auth0Enabled } from "../api/auth-mode";
+import { AuthControls } from "../features/connect/AuthControls";
 import { AppProvider } from "./AppProvider";
 import { useConnection } from "./Connection";
 import { pages, Router } from "./router";
@@ -40,10 +42,11 @@ function Shell() {
             ? <StatusLozenge label="sample" appearance="new" />
             : <StatusLozenge label={health.isError ? "unhealthy" : health.data?.journal_readable ? "healthy" : "apiStatus"}
               appearance={health.isError ? "removed" : health.data?.journal_readable ? "success" : "default"} />}</span>}
+          {!connecting && auth0Enabled() && session.kind === "connected" && <AuthControls />}
           {!connecting && session.kind === "sample" && <Button onClick={() => {
             changeSession({ kind: "connect" });
             navigate("/connect");
-          }}>{m("connect")}</Button>}
+          }}>{m(auth0Enabled() ? "signIn" : "connect")}</Button>}
           <details className="preferences-menu" onToggle={event => setPreferencesOpen(event.currentTarget.open)}>
             <summary>{m("preferences")}</summary>
             {preferencesOpen && <div className="preferences-popup">
