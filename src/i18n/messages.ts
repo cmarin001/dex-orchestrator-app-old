@@ -298,6 +298,19 @@ export const messages = defineMessages({
   rejectSignal: { id: "rejectSignal", defaultMessage: en.rejectSignal },
   noRecords: { id: "noRecords", defaultMessage: en.noRecords },
   noActivity: { id: "noActivity", defaultMessage: en.noActivity },
+  kill: { id: "kill", defaultMessage: en.kill },
+  killTitle: { id: "killTitle", defaultMessage: en.killTitle },
+  killPause: { id: "killPause", defaultMessage: en.killPause },
+  killFlatten: { id: "killFlatten", defaultMessage: en.killFlatten },
+  typeKill: { id: "typeKill", defaultMessage: en.typeKill },
+  palette: { id: "palette", defaultMessage: en.palette },
+  palettePlaceholder: { id: "palettePlaceholder", defaultMessage: en.palettePlaceholder },
+  groupLive: { id: "groupLive", defaultMessage: en.groupLive },
+  groupAnalysis: { id: "groupAnalysis", defaultMessage: en.groupAnalysis },
+  groupControl: { id: "groupControl", defaultMessage: en.groupControl },
+  groupSystem: { id: "groupSystem", defaultMessage: en.groupSystem },
+  shortcuts: { id: "shortcuts", defaultMessage: en.shortcuts },
+  entriesOn: { id: "entriesOn", defaultMessage: en.entriesOn },
 });
 
 export function useMessage() {

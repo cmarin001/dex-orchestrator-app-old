@@ -1,0 +1,115 @@
+/* Terminal desk tokens. Atlaskit components read these variables. */
+html[data-color-mode="dark"] {
+  color-scheme: dark;
+  --desk-canvas: #0a0a0b;
+  --desk-panel: #111113;
+  --desk-overlay: #18181b;
+  --desk-ink: #f4f4f5;
+  --desk-muted: #a1a1aa;
+  --desk-faint: #71717a;
+  --desk-line: rgba(255, 255, 255, 0.08);
+  --desk-accent: #00d9a5;
+  --desk-accent-ink: #04241c;
+  --desk-danger: #f87171;
+  --desk-warn: #fbbf24;
+  --desk-up: #00d9a5;
+  --desk-down: #f87171;
+  --desk-chip: rgba(255, 255, 255, 0.06);
+  --desk-hover: rgba(255, 255, 255, 0.04);
+}
+
+html[data-color-mode="light"] {
+  color-scheme: light;
+  --desk-canvas: #fafafa;
+  --desk-panel: #ffffff;
+  --desk-overlay: #ffffff;
+  --desk-ink: #18181b;
+  --desk-muted: #52525b;
+  --desk-faint: #71717a;
+  --desk-line: rgba(0, 0, 0, 0.08);
+  --desk-accent: #009e78;
+  --desk-accent-ink: #ffffff;
+  --desk-danger: #dc2626;
+  --desk-warn: #b45309;
+  --desk-up: #047857;
+  --desk-down: #dc2626;
+  --desk-chip: rgba(0, 0, 0, 0.04);
+  --desk-hover: rgba(0, 0, 0, 0.04);
+}
+
+html[data-color-mode="dark"],
+html[data-color-mode="light"] {
+  --ds-surface: var(--desk-panel);
+  --ds-surface-hovered: var(--desk-hover);
+  --ds-surface-pressed: var(--desk-hover);
+  --ds-surface-sunken: var(--desk-canvas);
+  --ds-surface-raised: var(--desk-overlay);
+  --ds-surface-overlay: var(--desk-overlay);
+  --ds-text: var(--desk-ink);
+  --ds-text-subtle: var(--desk-muted);
+  --ds-text-subtlest: var(--desk-faint);
+  --ds-text-inverse: var(--desk-accent-ink);
+  --ds-text-selected: var(--desk-accent);
+  --ds-text-success: var(--desk-up);
+  --ds-text-warning: var(--desk-warn);
+  --ds-text-danger: var(--desk-down);
+  --ds-link: var(--desk-accent);
+  --ds-link-pressed: var(--desk-accent);
+  --ds-icon: var(--desk-muted);
+  --ds-icon-subtle: var(--desk-faint);
+  --ds-icon-selected: var(--desk-accent);
+  --ds-icon-brand: var(--desk-accent);
+  --ds-border: var(--desk-line);
+  --ds-border-bold: var(--desk-line);
+  --ds-border-selected: var(--desk-accent);
+  --ds-border-focused: var(--desk-accent);
+  --ds-border-input: var(--desk-line);
+  --ds-background-neutral: var(--desk-chip);
+  --ds-background-neutral-subtle: transparent;
+  --ds-background-neutral-subtle-hovered: var(--desk-hover);
+  --ds-background-neutral-hovered: var(--desk-hover);
+  --ds-background-selected: color-mix(in srgb, var(--desk-accent) 14%, transparent);
+  --ds-background-selected-bold: var(--desk-accent);
+  --ds-background-brand-bold: var(--desk-accent);
+  --ds-background-brand-bold-hovered: color-mix(in srgb, var(--desk-accent) 86%, white);
+  --ds-background-brand-bold-pressed: color-mix(in srgb, var(--desk-accent) 80%, black);
+  --ds-background-danger-bold: var(--desk-danger);
+  --ds-background-danger-bold-hovered: color-mix(in srgb, var(--desk-danger) 86%, white);
+  --ds-background-input: var(--desk-canvas);
+  --ds-background-input-hovered: var(--desk-panel);
+  --ds-chart-categorical-1: var(--desk-accent);
+  --ds-font-family-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --ds-font-family-heading: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --ds-font-family-code: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  background: var(--desk-canvas, #0a0a0b);
+  color: var(--desk-ink, #f4f4f5);
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+button:not(:disabled),
+[role="button"]:not(:disabled),
+summary {
+  cursor: pointer;
+}
+
+code,
+kbd {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+.desk-pulse { animation: desk-pulse 2s ease-in-out infinite; }
+
+@keyframes desk-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-pulse { animation: none !important; opacity: 1; }
+}
