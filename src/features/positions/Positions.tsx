@@ -1,5 +1,7 @@
+import desk from "../../desk.module.css";
 import { useEffect, useMemo, useState } from "react";
 import Button from "@atlaskit/button/new";
+import Lozenge from "@atlaskit/lozenge";
 import TextField from "@atlaskit/textfield";
 import InlineMessage from "@atlaskit/inline-message";
 import EmptyState from "@atlaskit/empty-state";
@@ -15,6 +17,7 @@ import { AuditTimeline } from "../audit/Audit";
 import { DetailsDrawer } from "../../ui/DetailsDrawer";
 import { SelectField } from "../../ui/SelectField";
 import { ControlButton } from "../../ui/ControlButton";
+import { SortOptions, useSortOptions, useSortOrder } from "../../ui/SortOptions";
 import { DataTable } from "../../ui/DataTable";
 import { BackendText, ErrorBoundary, ErrorNotice, Loading } from "../../ui/Feedback";
 import { PageShell, Panel } from "../../ui/PageShell";
@@ -38,7 +41,7 @@ function PositionAudit({ position }: { position: Position }) {
   </Panel>;
 }
 
-function PositionDetails({ position, onClose }: { position: Position; onClose: () => void }) {
+function PositionDetails({ position, selector, onClose }: { position: Position; selector: Controls["exit"] | null; onClose: () => void }) {
   const m = useMessage();
   const f = useFormat();
   const { mode } = useMode();
@@ -49,7 +52,10 @@ function PositionDetails({ position, onClose }: { position: Position; onClose: (
           <Text>{m("pnl")} {f.usd(position.unrealized_pnl_usd)}</Text>
           <Text>{m("age")} {f.duration(position.age_sec)}</Text>
         </Inline>
-        {mode === "expert" && <ExpertPosition position={position} />}
+        {mode === "expert" && <>
+          <ExpertPosition position={position} />
+          {selector && <ExitAction position={position} selector={selector} />}
+        </>}
   </DetailsDrawer>;
 }
 function ExpertPosition({ position }: { position: Position }) {
@@ -117,37 +123,51 @@ export default function Positions() {
   const [selected, setSelected] = useState<Position>();
   const [filter, setFilter] = useState("");
   const [chain, setChain] = useState("");
+  const sorting = useSortOrder<Position>();
+  const sortOptions = useSortOptions(["entry", "mark"]);
   const all = positions.data?.items ?? [];
   const shown = expert ? all.filter(p => (!chain || p.chain === chain) && p.token.toLowerCase().includes(filter.trim().toLowerCase())) : all;
   const chains = [{ label: m("allChains"), value: "" }, ...Array.from(new Set(all.map(p => p.chain))).sort().map(chain => ({ label: chain, value: chain }))];
+  const openSelection = selected && all.find(p => identity(p) === identity(selected));
   const exitSelector = (p: Position): Controls["exit"] | null => {
     if (all.filter(row => row.run_id === p.run_id).length === 1) return { run_id: p.run_id };
     if (all.filter(row => row.chain === p.chain && row.token === p.token).length === 1) return { chain: p.chain, token: p.token };
     return null;
   };
-  const columns = ["token", "chain", "size", "pnl", "age", "details", ...(expert ? ["entry", "mark", "action"] as const : [])] as const;
+  const sorted = sorting.sort([...shown].sort((a, b) => a.chain.localeCompare(b.chain)), {
+    entry: position => position.entry_price_usd, mark: position => position.mark?.price,
+  });
+  const columns = ["token", "chain", "size", "pnl", "age", "details"] as const;
   return <PageShell title="positions">
     {expert && <Inline space="space.200" shouldWrap alignBlock="end">
       <Stack space="space.050"><label htmlFor="positions-filter">{m("filter")}</label>
         <TextField id="positions-filter" value={filter} onChange={event => setFilter(event.currentTarget.value)} /></Stack>
-      <div className="filter-field"><SelectField id="positions-chain" label="chain" options={chains} value={chain} onChange={setChain} /></div>
+      <div className={desk["filter-field"]}><SelectField id="positions-chain" label="chain" options={chains} value={chain} onChange={setChain} /></div>
+      <SortOptions {...sorting} options={sortOptions} />
     </Inline>}
     {positions.isPending && <Loading />}
     <ErrorNotice error={positions.error} retry={() => void positions.refetch()} />
-    {positions.data && <DataTable title="positions" empty="noPositions" sortable={expert}
-      head={{ cells: columns.map(key => ({ key, content: m(key), isSortable: expert && key !== "details" && key !== "action" })) }}
-      rows={[...shown].sort((a, b) => a.chain.localeCompare(b.chain)).map(p => ({ key: identity(p), cells: [
-        { key: p.token, content: <span className="table-id">{p.token}</span> },
-        { key: p.chain, content: p.chain }, { key: p.size_usd, content: f.usd(p.size_usd) },
-        { key: p.unrealized_pnl_usd ?? undefined, content: f.usd(p.unrealized_pnl_usd) },
+    {positions.data && !expert && (all.length ? <Stack as="ul" space="space.150">
+      {all.map(p => <li key={identity(p)} className={desk["record-card"]}>
+        <Button appearance="subtle" shouldFitContainer onClick={() => setSelected(p)}>
+          <span className={desk["position-card"]}><Stack as="span" space="space.100">
+            <span className={desk["metric-value"]}>{f.usd(p.unrealized_pnl_usd)}</span>
+            <code className={desk["table-id"]}>{p.token}</code>
+            <Inline as="span" space="space.150" shouldWrap><Lozenge>{p.chain}</Lozenge><code>{f.usd(p.size_usd)}</code><Text>{f.duration(p.age_sec)}</Text></Inline>
+            <span>{m("details")}</span>
+          </Stack></span>
+        </Button>
+      </li>)}
+    </Stack> : <EmptyState header={m("noPositions")} />)}
+    {positions.data && expert && <DataTable key={sorting.field + sorting.descending} title="positions" empty="noPositions" sortable cards
+      head={{ cells: columns.map(key => ({ key, content: m(key), isSortable: expert && key !== "details" })) }}
+      rows={sorted.map(p => ({ key: identity(p), cells: [
+        { key: p.token, content: <span className={desk["table-id"]}>{p.token}</span> },
+        { key: p.chain, content: <Lozenge>{p.chain}</Lozenge> }, { key: p.size_usd, content: <code className={desk["numeric"]}>{f.usd(p.size_usd)}</code> },
+        { key: p.unrealized_pnl_usd ?? undefined, content: <code className={desk["numeric"] + " " + ((p.unrealized_pnl_usd ?? 0) < 0 ? desk["negative"] : (p.unrealized_pnl_usd ?? 0) > 0 ? desk["positive"] : "")}>{f.usd(p.unrealized_pnl_usd)}</code> },
         { key: p.age_sec, content: f.duration(p.age_sec) },
-        { key: "detail", content: <Button appearance="subtle" aria-label={m("showPosition", { token: p.token })} onClick={() => setSelected(p)}>{m("details")}</Button> },
-        ...(expert ? [
-          { key: p.entry_price_usd, content: f.usd(p.entry_price_usd, 8) },
-          { key: p.mark?.price, content: f.usd(p.mark?.price, 8) },
-          { key: "action", content: <ExitAction position={p} selector={exitSelector(p)} /> },
-        ] : []),
+        { key: "detail", content: <Stack space="space.100"><Button appearance="subtle" aria-label={m("showPosition", { token: p.token })} onClick={() => setSelected(p)}>{m("details")}</Button><ExitAction position={p} selector={exitSelector(p)} /></Stack> },
       ] }))} />}
-    {selected && <PositionDetails position={all.find(p => identity(p) === identity(selected)) ?? selected} onClose={() => setSelected(undefined)} />}
+    {selected && <PositionDetails position={openSelection ?? selected} selector={openSelection ? exitSelector(openSelection) : null} onClose={() => setSelected(undefined)} />}
   </PageShell>;
 }

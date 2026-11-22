@@ -4,19 +4,31 @@ import { useConnection } from "../app/Connection";
 import { retryDelay } from "../lib/retry";
 import { ApiError, request } from "./client";
 import type { Command, Controls, Receipt } from "./types";
+import type { OperationCommand, OperationReceipt } from "../features/controls/operations";
+
+type DeskCommand = Command | OperationCommand;
+type DeskReceipt = Receipt | OperationReceipt;
 
 const receiptInterval = 5000;
 export type Tracked = {
-  id: string; command: Command; scope: string; receipt?: Receipt;
+  id: string; command: DeskCommand; scope: string; receipt?: DeskReceipt;
   checking: boolean; dismissed?: boolean; error?: unknown; nextCheck?: number; failures: number;
 };
 type CommandContext = {
-  items: Tracked[]; submit: (command: Command, scope: string) => void;
+  items: Tracked[]; submit: (command: DeskCommand, scope: string) => void;
   check: (item: Tracked) => void; dismiss: (id: string) => void;
 };
 const Context = createContext<CommandContext | null>(null);
 
-async function send({ id, command, signal }: { id: string; command: Command; signal: AbortSignal }) {
+async function send({ id, command, signal }: { id: string; command: DeskCommand; signal: AbortSignal }) {
+  if (command.type === "operation") {
+    const receipt = await request<OperationReceipt>("/api/v1" + command.path, {
+      method: "POST", body: JSON.stringify({ ...command.payload, request_id: id }), signal,
+    });
+    if (receipt?.request_id !== id || !["queued", "applied", "rejected"].includes(receipt.state) ||
+      typeof receipt.actor !== "string" || !Array.isArray(receipt.gaps)) throw new ApiError(0, "invalid_response_data");
+    return receipt;
+  }
   const receipt = await request<Receipt>("/api/v1/controls/" + command.type, {
     method: "POST", body: JSON.stringify({ ...command.payload, request_id: id }), signal,
   });
@@ -53,6 +65,9 @@ export function CommandProvider({ children }: { children: ReactNode }) {
       const queued = receipt.state === "queued";
       patch(item.id, { receipt, checking: false, failures: 0, nextCheck: queued ? Date.now() + receiptInterval : undefined });
       if (!queued) {
+        if (item.command.type === "operation") {
+          void query.invalidateQueries({ queryKey: [generation, "/api/v1/" + item.command.resource] });
+        }
         for (const path of ["/api/v1/status", "/api/v1/positions", "/api/v1/risk", "/api/v1/candidates"]) {
           void query.invalidateQueries({ queryKey: [generation, path] });
         }

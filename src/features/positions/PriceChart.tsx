@@ -1,3 +1,4 @@
+import desk from "../../desk.module.css";
 import { useEffect, useRef } from "react";
 import { useColorMode } from "@atlaskit/app-provider";
 import { createChart, createSeriesMarkers, LineSeries, LineStyle, LineType, ColorType } from "lightweight-charts";
@@ -38,10 +39,10 @@ export function PriceChart({ view }: { view: LiveView }) {
     palette.current = colors;
     api.current.chart.applyOptions({
       layout: { background: { type: ColorType.Solid, color: colors.background }, textColor: colors.axis },
-      grid: { vertLines: { color: colors.grid }, horzLines: { color: colors.grid } },
+      grid: { vertLines: { color: colors.grid, visible: false }, horzLines: { color: colors.grid, visible: false } },
     });
     api.current.series.applyOptions({ color: colors.series });
-    api.current.entry.applyOptions({ color: colors.axis });
+    api.current.entry.applyOptions({ color: colors.warning });
     api.current.target.applyOptions({ color: colors.target });
   }, [colorMode]);
   useEffect(() => {
@@ -64,5 +65,5 @@ export function PriceChart({ view }: { view: LiveView }) {
     })));
     if (!fitted.current) { value.chart.timeScale().fitContent(); fitted.current = true; }
   }, [view, intl.locale, colorMode, entryLabel, targetLabel, buy, sell]);
-  return <div ref={root} className="chart" role="img" aria-label={label} />;
+  return <div ref={root} className={desk["chart"]} role="img" aria-label={label} />;
 }

@@ -6,17 +6,17 @@ import { useConnection } from "../app/Connection";
 import { ConfirmDialog } from "./ConfirmDialog";
 
 type Action = { title: MessageId; help: MessageId; current: ReactNode; onConfirm: () => void };
-export function ControlButton({ title, help, current, onConfirm, disabled }: Action & { disabled?: boolean }) {
+export function ControlButton({ title, help, current, onConfirm, disabled, phrase, primary }: Action & { disabled?: boolean; phrase?: string; primary?: boolean }) {
   const m = useMessage();
   const [action, setAction] = useState<Action>();
   const { session } = useConnection();
   const canSubmit = !disabled && session.kind === "connected";
   return <>
-    <Tooltip content={m(help)}><span><Button isDisabled={!canSubmit} onClick={() => setAction({ title, help, current, onConfirm })}>
+    <Tooltip content={m(help)}><span><Button appearance={primary ? "primary" : "subtle"} isDisabled={!canSubmit} onClick={() => setAction({ title, help, current, onConfirm })}>
       {m(title)}
     </Button></span></Tooltip>
     <ConfirmDialog open={!!action} title={action?.title ?? title} help={action?.help ?? help} current={action?.current}
-      canConfirm={canSubmit && title === action?.title} onCancel={() => setAction(undefined)} onConfirm={() => {
+      phrase={phrase} canConfirm={canSubmit && title === action?.title} onCancel={() => setAction(undefined)} onConfirm={() => {
         action?.onConfirm();
         setAction(undefined);
       }} />

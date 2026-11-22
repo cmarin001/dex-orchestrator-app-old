@@ -1,3 +1,4 @@
+import desk from "../../desk.module.css";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "@atlaskit/button/new";
@@ -18,7 +19,7 @@ export default function Connect() {
   const [error, setError] = useState<unknown>(null);
   const pending = useRef<AbortController>();
   useEffect(() => () => pending.current?.abort(), []);
-  return <PageShell title="connect"><div className="connect-form panel">
+  return <PageShell title="connect"><div className={desk["connect-form"] + " " + desk["panel"]}>
     <form onSubmit={async event => {
       event.preventDefault();
       const form = event.currentTarget;
@@ -42,6 +43,7 @@ export default function Connect() {
     }}>
       <Stack space="space.200">
         <SectionMessage appearance="information"><Text>{m("tokenNote")}</Text></SectionMessage>
+        <details><summary>{m("explainToken")}</summary><Text>{m("connectIntro")}</Text></details>
         <label htmlFor="backend-origin">{m("backendUrl")}</label>
         <TextField id="backend-origin" name="origin" type="url" defaultValue={configuredOrigin()} isRequired />
         <label htmlFor="backend-token">{m("bearer")}</label>

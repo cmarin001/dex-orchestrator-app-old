@@ -18,7 +18,11 @@ it("hides expert controls without discarding an already queued command or the to
   const arm = await screen.findByRole("button", { name: "Arm live execution" }) as HTMLButtonElement;
   await waitFor(() => expect(arm.disabled).toBe(false));
   fireEvent.click(arm);
-  fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Confirm request" }));
+  const dialog = within(await screen.findByRole("dialog"));
+  const confirm = dialog.getByRole("button", { name: "Confirm request" }) as HTMLButtonElement;
+  expect(confirm.disabled).toBe(true);
+  fireEvent.change(dialog.getByRole("textbox"), { target: { value: "ARM" } });
+  fireEvent.click(confirm);
   expect(await screen.findByText("Queued")).toBeTruthy();
   fireEvent.click(screen.getByText("Display preferences"));
   const user = userEvent.setup();

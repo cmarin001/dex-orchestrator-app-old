@@ -1,3 +1,4 @@
+import desk from "../../desk.module.css";
 import { useId, useState } from "react";
 import Button from "@atlaskit/button/new";
 import EmptyState from "@atlaskit/empty-state";
@@ -17,7 +18,7 @@ import { DetailsDrawer } from "../../ui/DetailsDrawer";
 import { ConfirmDialog } from "../../ui/ConfirmDialog";
 import { DataTable } from "../../ui/DataTable";
 import { BackendText, ErrorNotice, Loading } from "../../ui/Feedback";
-import { PageShell, Panel } from "../../ui/PageShell";
+import { DashboardGrid, PageShell, Panel } from "../../ui/PageShell";
 import { InlineReceipts } from "../../ui/ReceiptBadge";
 import { controlEvent } from "../audit/events";
 import { fields, validRisk } from "./risk-form";
@@ -26,9 +27,9 @@ function ConfigValues({ config }: { config: RiskConfig }) {
   const m = useMessage();
   const f = useFormat();
   return <Stack space="space.100">
-    {fields.map(([key, label]) => <Inline key={key} shouldWrap space="space.100">
-      <Text weight="semibold">{m(label)}</Text><Text>{key === "max_slippage_bps" ? f.bps(config[key]) : f.number(config[key])}</Text>
-    </Inline>)}
+    <dl className={desk["config-values"]}>{fields.map(([key, label]) => <div key={key}>
+      <dt className={desk["data-label"]}>{m(label)}</dt><dd><code>{key === "max_slippage_bps" ? f.bps(config[key]) : f.number(config[key])}</code></dd>
+    </div>)}</dl>
     <Text weight="semibold">{m("riskLadder")}</Text>
     <DataTable title="riskLadder" empty="noAudit" head={{ cells: [
       { key: "at", content: m("afterSeconds") }, { key: "target", content: m("targetBps") },
@@ -117,14 +118,14 @@ function RiskHistory({ current, expert }: { current: RiskResponse; expert: boole
   const previous = revisions[index + 1];
   return <>
     {expert && <Panel title="riskHistory">
-    {!loaded && <div><Button onClick={() => setLoaded(true)}>{m("showEvents")}</Button></div>}
+    {!loaded && <div><Button appearance="subtle" onClick={() => setLoaded(true)}>{m("showEvents")}</Button></div>}
     {loaded && history.isPending && <Loading />}
     {loaded && <ErrorNotice error={history.error} retry={() => void history.refetch()} />}
     {history.data && (revisions.length ? <DataTable title="riskHistory" empty="noRiskHistory"
       head={{ cells: (["revision", "actor", "requestId", "details"] as const).map(key => ({ key, content: m(key) })) }}
       rows={revisions.map(row => ({ key: row.id, cells: [
         { content: f.date(row.at) }, { content: <BackendText value={row.actor} /> }, { content: row.id },
-        { content: <Button onClick={() => setSelected(row.id)}>{m("compare")}</Button> },
+        { content: <Button appearance="subtle" onClick={() => setSelected(row.id)}>{m("compare")}</Button> },
       ] }))} /> : <EmptyState header={m("noRiskHistory")} />)}
     {history.hasNextPage && <div><Button isLoading={history.isFetchingNextPage} onClick={() => void history.fetchNextPage()}>{m("loadMore")}</Button></div>}
     </Panel>}
@@ -144,19 +145,20 @@ export default function Risk() {
   return <PageShell title="risk">
     {risk.isPending && <Loading />}
     <ErrorNotice error={risk.error} retry={() => void risk.refetch()} />
-    {risk.data && <>
-      <Panel title="riskConfig">
+    {risk.data && <DashboardGrid variant={mode === "expert" ? "split" : "full"}>
+      <Stack space="space.400"><Panel title="riskConfig">
         <Text>{m("revision")} {f.date(risk.data.as_of)}</Text>
         {risk.data.actor && <BackendText value={risk.data.actor} />}
         <ConfigValues config={risk.data.config} />
       </Panel>
-      {mode === "expert" && <>
+      <RiskHistory current={risk.data} expert={mode === "expert"} />
+      </Stack>
+      {mode === "expert" && <div className={desk["risk-side"]}>
         <Panel title="riskUpdate">
           <RiskForm key={risk.data.as_of ?? "initial"} initial={risk.data.config} />
           <InlineReceipts scope="risk" />
         </Panel>
-      </>}
-      <RiskHistory current={risk.data} expert={mode === "expert"} />
-    </>}
+      </div>}
+    </DashboardGrid>}
   </PageShell>;
 }
