@@ -33,27 +33,41 @@ and the app directory.
 
 ## Deploy to the DigitalOcean droplet
 
-1. Build this checkout at `/opt/dex-orchestrator-app` with `npm ci` and
-   `npm run build`. Leave `VITE_DASHBOARD_API_URL` empty so the dashboard
-   uses its own HTTPS origin.
-2. Set `VITE_EXPECTED_CYCLE_INTERVAL_MS` in the dashboard build environment.
-   Its default is `90000`. Match the backend worker's `LOOP_INTERVAL_MS`
-   whenever it changes, then rebuild. The dashboard marks the last cycle
-   stale after two expected intervals. API health is displayed separately.
-3. Set the API's `DASHBOARD_ORIGIN` to the complete HTTPS dashboard origin
-   including the scheme (for example `https://dex.example.com`). Set this
-   in the droplet deployment configuration.
-4. Incorporate [the dashboard locations](deploy/nginx/dashboard.locations.conf)
-   in the existing Nginx TLS server block. Keep the existing TLS configuration,
-   security headers, rate limits, and firewall policy. Ensure Nginx can read
-   `dist`. The paths `/api/v1/`, `/trades`, and `/live-view/stream` proxy
-   to loopback. Preserve Authorization on them and leave SSE buffering off.
-   Check with `sudo nginx -t` before reloading Nginx. Existing deployments may
-   have versioned API proxy options to carry over from their `/api/` block.
+The dashboard image serves static files as a non-root user. Compose publishes
+it only at `127.0.0.1:8081`. Host Nginx serves HTTPS and proxies the REST API,
+trade history, and price stream to the existing backend on port 8787.
 
-Visit the HTTPS hostname, check sample mode, then use **Connect to backend**
-with the droplet origin and the dashboard bearer. Confirm the health indicator,
-the cycle timestamp, and the current paper/live mode before submitting controls.
+1. Check out the desired dashboard revision on the droplet. Download the
+   matching `dashboard-image-<commit>` artifact from the GitHub **Actions →
+   Dashboard image** run and extract the outer ZIP. Transfer
+   `dashboard-image.tar.gz` to the droplet. From the checked-out dashboard
+   repo, load and start the image:
+
+   ```sh
+   sudo docker image load -i dashboard-image.tar.gz
+   sudo env DASHBOARD_IMAGE=dex-orchestrator-app:<commit> docker compose up -d --no-build --wait
+   curl --fail http://127.0.0.1:8081/healthz
+   ```
+
+   Replace `<commit>` with the full SHA from the image tag printed by
+   `docker image load`. To build locally instead, run
+   `sudo docker compose up -d --build --wait`. Prefer loading a prebuilt
+   image on a small droplet.
+2. The image uses the page's HTTPS origin and defaults to a 90-second worker
+   interval. If the worker's `LOOP_INTERVAL_MS` differs, build the image
+   with the matching public `VITE_EXPECTED_CYCLE_INTERVAL_MS`. The browser
+   marks the last cycle stale after two expected intervals.
+3. Set the API's `DASHBOARD_ORIGIN` to the complete HTTPS dashboard origin,
+   including the scheme. With an existing TLS server block, incorporate the
+   [dashboard locations](deploy/nginx/dashboard.locations.conf). Preserve
+   the TLS settings, response headers, existing `api` rate-limit zone,
+   and firewall rules. Run `sudo nginx -t` before reloading Nginx.
+4. Visit the HTTPS hostname. Check sample mode, then connect with the
+   dashboard bearer token and verify API health and worker freshness.
+   Verify that an unauthenticated API request returns HTTP 401.
+
+To roll back the dashboard, rerun the Compose command with the previous
+image tag. Keep the previous image available until verification is complete.
 
 ## Operating notes
 
