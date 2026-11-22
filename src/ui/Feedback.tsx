@@ -4,6 +4,8 @@ import SectionMessage from "@atlaskit/section-message";
 import Spinner from "@atlaskit/spinner";
 import Tooltip from "@atlaskit/tooltip";
 import { Text, Inline } from "@atlaskit/primitives";
+import { auth0Enabled } from "../api/auth-mode";
+import { signIn } from "../api/auth";
 import { ApiError } from "../api/client";
 import { useConnection } from "../app/Connection";
 import { useMessage } from "../i18n/messages";
@@ -12,7 +14,10 @@ export function ErrorNotice({ error, retry }: { error: unknown; retry?: () => vo
   const m = useMessage();
   if (!error) return null;
   const api = error instanceof ApiError ? error : null;
-  const label = api?.status === 401 ? m("unauthorized")
+  const label = api?.code === "recent_mfa_required" ? m("recentMfa")
+    : api?.code === "insufficient_scope" ? m("authForbidden")
+    : api?.code === "auth_unavailable" ? m("authUnavailable")
+    : api?.status === 401 ? m("unauthorized")
     : api?.status === 409 ? m("conflict", { id: api.requestId ?? m("unavailable") })
     : api?.code === "invalid_origin" ? m("invalidOrigin")
     : api?.code === "missing_token" ? m("missingToken")
@@ -21,6 +26,7 @@ export function ErrorNotice({ error, retry }: { error: unknown; retry?: () => vo
     : api?.code === "invalid_response_data" ? m("dataError") : m("error");
   return <div role="alert"><SectionMessage appearance="error" title={label}>
     {api && api.status > 0 && api.code !== "http_error" && <BackendText value={api.message} />}
+    {auth0Enabled() && api?.code === "recent_mfa_required" && <Button onClick={signIn}>{m("signIn")}</Button>}
     {retry && <Button onClick={retry}>{m("retry")}</Button>}
   </SectionMessage></div>;
 }

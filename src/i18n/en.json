@@ -229,5 +229,12 @@
   "unavailableRiskHistory": "Load an older audit page to compare this revision.",
   "receiptUnverified": "The server response could not be confirmed. Check with the same request ID.",
   "expertMode": "Expert mode",
-  "ambiguousPosition": "The API cannot uniquely identify this position for an exit request."
+  "ambiguousPosition": "The API cannot uniquely identify this position for an exit request.",
+  "signIn": "Sign in",
+  "signOut": "Sign out",
+  "authConnect": "Sign in with Auth0 to connect to TradeKeel.",
+  "authFailed": "Sign-in did not complete. Try signing in again.",
+  "authUnavailable": "The sign-in service is unavailable. Try again.",
+  "recentMfa": "Verify your identity again, then review and submit the command.",
+  "authForbidden": "Your account does not have permission for this action."
 }
