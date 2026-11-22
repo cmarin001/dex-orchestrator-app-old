@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useData } from "../../api/queries";
 import { useConnection } from "../../app/Connection";
 import { useMessage } from "../../i18n/messages";
@@ -21,6 +21,14 @@ const chainName: Record<string, string> = {
   bitcoin_segwit: "Bitcoin Native SegWit", bitcoin_taproot: "Bitcoin Taproot",
 };
 
+function walletEvent(event: "overview" | "deposit_address", reason: string, ok: boolean, chain?: string) {
+  console[ok ? "info" : "warn"](JSON.stringify({
+    at: new Date().toISOString(), level: ok ? "info" : "warn", event: "wallet." + event,
+    component: "dashboard_browser", route: "/wallets", outcome: ok ? "ok" : "failed", reason,
+    chain: chain && Object.hasOwn(chainName, chain) ? chain : undefined,
+  }));
+}
+
 function DepositAddress({ wallet }: { wallet: Wallet }) {
   const m = useMessage();
   const [result, setResult] = useState<"copied" | "error">();
@@ -28,8 +36,14 @@ function DepositAddress({ wallet }: { wallet: Wallet }) {
   if (!wallet.fundable) return <span>{m("walletNeedsVerification")}</span>;
   return <>
     <button type="button" className={desk["choice"]} onClick={async () => {
-      try { await navigator.clipboard.writeText(wallet.address); setResult("copied"); }
-      catch { setResult("error"); }
+      try {
+        await navigator.clipboard.writeText(wallet.address);
+        walletEvent("deposit_address", "public_address_copied_to_clipboard", true, wallet.chain);
+        setResult("copied");
+      } catch {
+        walletEvent("deposit_address", "clipboard_write_failed", false, wallet.chain);
+        setResult("error");
+      }
     }}>{m("walletCopyDeposit")}</button>
     {result && <span role="status">{m(result)}</span>}
   </>;
@@ -39,6 +53,12 @@ export default function Wallets() {
   const m = useMessage();
   const { session } = useConnection();
   const query = useData<{ wallets: Wallet[] }>("/api/v1/wallets", 30_000, session.kind === "connected");
+  useEffect(() => {
+    if (query.dataUpdatedAt) walletEvent("overview", "wallet_rows_received", true);
+  }, [query.dataUpdatedAt]);
+  useEffect(() => {
+    if (query.errorUpdatedAt) walletEvent("overview", "wallet_rows_unavailable", false);
+  }, [query.errorUpdatedAt]);
   return <PageShell title="wallets">
     {session.kind !== "connected" && <p>{m("walletConnect")}</p>}
     {query.isFetching && !query.data && <Loading />}

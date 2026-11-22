@@ -97,6 +97,24 @@ export function createBff(options: { origin: URL; upstream: URL; oidc: Oidc; fet
   }
 
   const server = createServer(async (req, res) => {
+    const started = performance.now();
+    let route = "other";
+    let reason = "request_completed";
+    let requestId: string | undefined;
+    const report = (finished: boolean) => {
+      if (route !== "/api/v1/wallets") return;
+      const status = finished ? res.statusCode : undefined;
+      const failed = !finished || (status ?? 0) >= 400;
+      const level = failed ? "warn" : "info";
+      console[level](JSON.stringify({
+        at: new Date().toISOString(), level, event: "wallet.proxy", component: "auth_bff",
+        route, method: req.method === "GET" ? "GET" : "OTHER", status, request_id: requestId,
+        duration_ms: Math.round(performance.now() - started),
+        outcome: failed ? "failed" : "ok", reason: finished ? reason : "response_interrupted",
+      }));
+    };
+    res.once("finish", () => report(true));
+    res.once("close", () => { if (!res.writableFinished) report(false); });
     res.setHeader("Cache-Control", "no-store");
     res.setHeader("Referrer-Policy", "no-referrer");
     res.setHeader("X-Content-Type-Options", "nosniff");
@@ -106,10 +124,12 @@ export function createBff(options: { origin: URL; upstream: URL; oidc: Oidc; fet
       if (!raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) return json(res, 400, { error: "invalid_path" });
       const url = new URL(raw, origin);
       const path = url.pathname;
+      if (path === "/api/v1/wallets") route = path;
       const method = req.method;
       if (url.origin !== origin.origin || raw.split("?")[0] !== path) return json(res, 400, { error: "invalid_path" });
       if (path === "/healthz" && method === "GET") return json(res, 200, { status: "ok" });
       if (method === "POST" && (req.headers.origin !== origin.origin || req.headers["x-dex-csrf"] !== "1")) {
+        reason = "csrf_check_failed";
         return json(res, 403, { error: "invalid_request_origin" });
       }
       prune();
@@ -166,8 +186,14 @@ export function createBff(options: { origin: URL; upstream: URL; oidc: Oidc; fet
       if (path === "/auth/me" && method === "GET") {
         return json(res, 200, session ? { authenticated: true, name: session.identity.name } : { authenticated: false });
       }
-      if (!allowed(method, path)) return json(res, 404, { error: "not_found" });
-      if (!session) return json(res, 401, { error: "unauthorized" });
+      if (!allowed(method, path)) {
+        reason = "route_or_method_not_allowlisted";
+        return json(res, 404, { error: "not_found" });
+      }
+      if (!session) {
+        reason = "session_missing_or_expired";
+        return json(res, 401, { error: "unauthorized" });
+      }
       const headers = new Headers();
       let body: string | undefined;
       if (method === "POST") {
@@ -180,11 +206,13 @@ export function createBff(options: { origin: URL; upstream: URL; oidc: Oidc; fet
       let token: string;
       try { token = await accessToken(session); }
       catch {
+        reason = "access_token_unavailable";
         endSession(sessionKey);
         return json(res, 401, { error: "unauthorized" });
       }
       if (session.abort.signal.aborted) return json(res, 401, { error: "unauthorized" });
       headers.set("Authorization", "Bearer " + token);
+      reason = "forwarded_with_server_access_token";
       const target = new URL(path + url.search, upstream);
       const stream = path === "/live-view/stream";
       const cutoff = Math.max(0, Math.min(stream ? 60_000 : 15_000, session.expires - Date.now(), session.tokens.expires - Date.now()));
@@ -194,7 +222,10 @@ export function createBff(options: { origin: URL; upstream: URL; oidc: Oidc; fet
       try {
         const signal = AbortSignal.any([session.abort.signal, disconnected.signal, AbortSignal.timeout(cutoff)]);
         const result = await fetchUpstream(target, { method, headers, body, redirect: "error", signal });
+        const upstreamId = result.headers.get("X-Request-Id");
+        if (upstreamId && /^[a-f0-9-]{36}$/i.test(upstreamId)) requestId = upstreamId;
         if (result.status === 401) {
+          reason = "upstream_authentication_rejected";
           await result.body?.cancel();
           endSession(sessionKey);
           res.setHeader("Set-Cookie", setCookie(sessionCookie, "", 0));
@@ -202,18 +233,20 @@ export function createBff(options: { origin: URL; upstream: URL; oidc: Oidc; fet
         }
         const type = result.headers.get("Content-Type")?.split(";")[0];
         if (type !== "application/json" && !(stream && result.ok && type === "text/event-stream")) {
+          reason = "unexpected_upstream_content_type";
           await result.body?.cancel();
           return json(res, 502, { error: "unexpected_upstream_response" });
         }
         res.setHeader("Content-Type", type);
-        const requestId = result.headers.get("X-Request-Id");
-        if (requestId) res.setHeader("X-Request-Id", requestId);
+        if (upstreamId) res.setHeader("X-Request-Id", upstreamId);
+        if (!result.ok) reason = "upstream_request_rejected";
         if (stream && result.ok) res.setHeader("X-Accel-Buffering", "no");
         res.writeHead(result.status);
         if (!result.body) return res.end();
         await pipeline(Readable.fromWeb(result.body as Parameters<typeof Readable.fromWeb>[0]), res, { signal });
       } finally { res.off("close", close); }
     } catch (error) {
+      reason = "proxy_request_failed";
       if (res.destroyed) return;
       if (res.headersSent) return res.destroy();
       if (error instanceof TooLarge) {
