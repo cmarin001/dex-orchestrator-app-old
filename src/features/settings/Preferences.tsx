@@ -14,19 +14,19 @@ function Preference<V extends string>({ id, label, value, choices, onChange }: {
   const options = choices.map(choice => ({ value: choice, label: m(choice as MessageId) }));
   return <SelectField id={id} label={label} value={value} options={options} onChange={onChange} />;
 }
-export default function Preferences() {
+export default function Preferences({ section = "all" }: { section?: "all" | "appearance" | "language" }) {
   const id = useId();
   const m = useMessage();
   const { mode, setMode } = useMode();
   const { locale, setLocale } = useLocale();
   const { mode: theme, setMode: setTheme } = useTheme();
   return <Stack space="space.200">
-    <Inline space="space.100" alignBlock="center">
+    {section !== "language" && <Inline space="space.100" alignBlock="center">
       <Toggle id={id + "mode"} isChecked={mode === "expert"} onChange={event => setMode(event.currentTarget.checked ? "expert" : "simple")} />
       <label htmlFor={id + "mode"}>{m("expertMode")}</label>
-    </Inline>
-    <Preference id={id + "locale"} label="language" value={locale === "en" ? "english" : "spanish"}
-      choices={["english", "spanish"]} onChange={choice => setLocale(choice === "spanish" ? "es" : "en")} />
-    <Preference id={id + "theme"} label="theme" value={theme} choices={["light", "dark", "auto"]} onChange={setTheme} />
+    </Inline>}
+    {section !== "appearance" && <Preference id={id + "locale"} label="language" value={locale === "en" ? "english" : "spanish"}
+      choices={["english", "spanish"]} onChange={choice => setLocale(choice === "spanish" ? "es" : "en")} />}
+    {section !== "language" && <Preference id={id + "theme"} label="theme" value={theme} choices={["light", "dark", "auto"]} onChange={setTheme} />}
   </Stack>;
 }

@@ -5,7 +5,7 @@ export const chartTokens = {
   positive: "var(--ds-text-success)",
   negative: "var(--ds-text-danger)",
   series1: "var(--ds-chart-categorical-1, var(--ds-background-brand-bold))",
-  series2: "var(--ds-chart-categorical-2, var(--ds-text-warning))",
+  series2: "var(--ds-text-subtle)",
 };
 
 // Lightweight Charts uses canvas, so it needs the computed colors.
@@ -17,7 +17,8 @@ export function canvasColors() {
     axis: read("--ds-text-subtlest", "#44546f"),
     grid: read("--ds-border", "#dcdfe4"),
     series: read("--ds-chart-categorical-1", read("--ds-background-brand-bold", "#0055cc")),
-    target: read("--ds-chart-categorical-2", read("--ds-text-warning", "#974f0c")),
+    target: read("--ds-text-subtlest", "#44546f"),
+    warning: read("--ds-text-warning", "#974f0c"),
     buy: read("--ds-text-success", "#216e4e"),
     sell: read("--ds-text-danger", "#ae2e24"),
   };

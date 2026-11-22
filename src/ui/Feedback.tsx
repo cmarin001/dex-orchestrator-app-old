@@ -1,9 +1,10 @@
+import desk from "../desk.module.css";
 import { Component, type ReactNode } from "react";
 import Button from "@atlaskit/button/new";
 import SectionMessage from "@atlaskit/section-message";
-import Spinner from "@atlaskit/spinner";
+import Skeleton from "@atlaskit/skeleton";
 import Tooltip from "@atlaskit/tooltip";
-import { Text, Inline } from "@atlaskit/primitives";
+import { Text, Stack } from "@atlaskit/primitives";
 import { auth0Enabled } from "../api/auth-mode";
 import { signIn } from "../api/auth";
 import { ApiError } from "../api/client";
@@ -27,7 +28,7 @@ export function ErrorNotice({ error, retry }: { error: unknown; retry?: () => vo
   return <div role="alert"><SectionMessage appearance="error" title={label}>
     {api && api.status > 0 && api.code !== "http_error" && <BackendText value={api.message} />}
     {auth0Enabled() && api?.code === "recent_mfa_required" && <Button onClick={signIn}>{m("signIn")}</Button>}
-    {retry && <Button onClick={retry}>{m("retry")}</Button>}
+    {retry && <Button appearance="subtle" onClick={retry}>{m("retry")}</Button>}
   </SectionMessage></div>;
 }
 
@@ -37,12 +38,14 @@ export function BackendText({ value }: { value: unknown }) {
   if (value === undefined || value === null) return <Text>{m("unavailable")}</Text>;
   const text = typeof value === "string" ? value : JSON.stringify(value, null, 2);
   const source = m(session.kind === "sample" ? "sourceSample" : "sourceBackend");
-  return <Tooltip content={source}><code title={source} className="backend-text">{text}</code></Tooltip>;
+  return <Tooltip content={source}><code title={source} className={desk["backend-text"]}>{text}</code></Tooltip>;
 }
 
 export function Loading() {
   const m = useMessage();
-  return <div role="status"><Inline space="space.100" alignBlock="center"><Spinner size="small" /><Text>{m("loading")}</Text></Inline></div>;
+  return <div role="status" aria-label={m("loading")} className={desk["list-skeleton"]}><Stack space="space.150">
+    {Array.from({ length: 5 }, (_, row) => <Skeleton key={row} width="100%" height={16} />)}
+  </Stack></div>;
 }
 
 export class ErrorBoundary extends Component<{ children: ReactNode; resetKey?: string }, { error: Error | null }> {

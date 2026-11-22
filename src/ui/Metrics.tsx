@@ -1,12 +1,13 @@
+import desk from "../desk.module.css";
 import type { ReactNode } from "react";
-import { Stack, Text, MetricText } from "@atlaskit/primitives";
-import { useMessage, type MessageId } from "../i18n/messages";
+import { FormattedMessage } from "react-intl";
+import { Stack } from "@atlaskit/primitives";
+import { messages, type MessageId } from "../i18n/messages";
 
-export function Metric({ label, value, detail }: { label: MessageId; value: string; detail?: ReactNode }) {
-  const m = useMessage();
-  return <div className="panel"><Stack space="space.100">
-    <Text color="color.text.subtle" weight="semibold">{m(label)}</Text>
-    <MetricText size="large">{value}</MetricText>
+export function Metric({ label, value, detail }: { label: MessageId; value: ReactNode; detail?: ReactNode }) {
+  return <div className={desk["metric"]}><Stack space="space.100">
+    <span className={desk["data-label"]}><FormattedMessage {...messages[label]} /></span>
+    <div className={desk["metric-value"]}>{value}</div>
     {detail}
   </Stack></div>;
 }
