@@ -306,5 +306,16 @@
   "groupControl": "Control",
   "groupSystem": "Sistema",
   "shortcuts": "Atajos",
-  "entriesOn": "Entradas activas"
+  "entriesOn": "Entradas activas",
+  "wallets": "Billeteras",
+  "walletTier": "Nivel de financiación",
+  "walletFundable": "Financiable",
+  "walletTracked": "En seguimiento",
+  "walletValidation": "Solo validación",
+  "walletBalance": "Saldo nativo",
+  "walletAddress": "Dirección pública",
+  "walletBlocked": "Financiación no disponible para esta red",
+  "walletNeedsVerification": "Verifica el firmante antes de financiar",
+  "walletConnect": "Conéctate a TradeKeel para ver las billeteras.",
+  "walletCopyDeposit": "Copiar dirección de depósito"
 }

@@ -21,7 +21,7 @@ import { useFormat } from "../lib/format";
 const Preferences = lazy(() => import("../features/settings/Preferences"));
 
 const groups: { label: MessageId; items: MessageId[] }[] = [
-  { label: "groupLive", items: ["overview", "positions", "candidates"] },
+  { label: "groupLive", items: ["overview", "positions", "wallets", "candidates"] },
   { label: "groupAnalysis", items: ["performance", "audit"] },
   { label: "groupControl", items: ["controls", "risk"] },
   { label: "groupSystem", items: ["settings"] },

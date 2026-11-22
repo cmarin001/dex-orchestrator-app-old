@@ -4,13 +4,13 @@ import { queryPath } from "../lib/pagination";
 import { request } from "./client";
 import type { AuditPage, Candidates, Equity, Health, Position, RiskResponse, Status, TradePage } from "./types";
 
-export function useData<T>(path: string, interval?: number) {
+export function useData<T>(path: string, interval?: number, enabled = true) {
   const { session, generation } = useConnection();
   return useQuery({
     queryKey: [generation, path],
     queryFn: ({ signal }) => request<T>(path, { signal }),
     refetchInterval: interval,
-    enabled: session.kind !== "connect",
+    enabled: enabled && session.kind !== "connect",
   });
 }
 export const useHealth = () => useData<Health>("/api/v1/health", 5000);

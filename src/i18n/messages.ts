@@ -3,6 +3,17 @@ import en from "./en.json";
 
 export type MessageId = keyof typeof en;
 export const messages = defineMessages({
+  wallets: { id: "wallets", defaultMessage: en.wallets },
+  walletTier: { id: "walletTier", defaultMessage: en.walletTier },
+  walletFundable: { id: "walletFundable", defaultMessage: en.walletFundable },
+  walletTracked: { id: "walletTracked", defaultMessage: en.walletTracked },
+  walletValidation: { id: "walletValidation", defaultMessage: en.walletValidation },
+  walletBalance: { id: "walletBalance", defaultMessage: en.walletBalance },
+  walletAddress: { id: "walletAddress", defaultMessage: en.walletAddress },
+  walletBlocked: { id: "walletBlocked", defaultMessage: en.walletBlocked },
+  walletNeedsVerification: { id: "walletNeedsVerification", defaultMessage: en.walletNeedsVerification },
+  walletConnect: { id: "walletConnect", defaultMessage: en.walletConnect },
+  walletCopyDeposit: { id: "walletCopyDeposit", defaultMessage: en.walletCopyDeposit },
   signIn: { id: "signIn", defaultMessage: en.signIn },
   signOut: { id: "signOut", defaultMessage: en.signOut },
   authConnect: { id: "authConnect", defaultMessage: en.authConnect },

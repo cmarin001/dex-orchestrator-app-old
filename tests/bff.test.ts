@@ -27,6 +27,9 @@ async function fixture(expires = Date.now() + 60_000) {
   };
   let streamSignal: AbortSignal | null | undefined;
   const forward = vi.fn<typeof fetch>(async (target, init) => {
+    if (String(target).includes("/api/v1/wallets")) {
+      return Response.json({ wallets: [] }, { headers: { "X-Request-Id": "1de3c435-6263-4e57-a29a-5ce48d772405" } });
+    }
     if (String(target).endsWith("/live-view/stream")) {
       streamSignal = init?.signal;
       return new Response(new ReadableStream({
@@ -62,6 +65,30 @@ async function fixture(expires = Date.now() + 60_000) {
   };
   return { call, loginFlow, signIn, oidc, forward, streamSignal: () => streamSignal };
 }
+
+it("logs wallet proxy outcomes and correlation without cookies, tokens, or query data", async () => {
+  const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  try {
+    const { call, signIn } = await fixture();
+    expect((await call("/api/v1/wallets")).status).toBe(401);
+    const { session } = await signIn();
+    const response = await call("/api/v1/wallets?trace=omit-this-query", { headers: { Cookie: session } });
+    await response.json();
+    expect(response.headers.get("X-Request-Id")).toBe("1de3c435-6263-4e57-a29a-5ce48d772405");
+    expect(info.mock.calls.map(([line]) => JSON.parse(line))).toContainEqual(expect.objectContaining({
+      event: "wallet.proxy", request_id: "1de3c435-6263-4e57-a29a-5ce48d772405", status: 200,
+      route: "/api/v1/wallets", reason: "forwarded_with_server_access_token",
+    }));
+    expect(warn.mock.calls.map(([line]) => JSON.parse(line))).toContainEqual(expect.objectContaining({
+      event: "wallet.proxy", status: 401, reason: "session_missing_or_expired",
+    }));
+    const output = JSON.stringify([...info.mock.calls, ...warn.mock.calls]);
+    for (const privateValue of [session, "server-access", "server-refresh", "omit-this-query"]) {
+      expect(output.includes(privateValue)).toBe(false);
+    }
+  } finally { info.mockRestore(); warn.mockRestore(); }
+});
 
 it("binds and consumes callback state, forwards only allowlisted routes, and revokes on logout", async () => {
   const { call, loginFlow, signIn, oidc, forward, streamSignal } = await fixture();
