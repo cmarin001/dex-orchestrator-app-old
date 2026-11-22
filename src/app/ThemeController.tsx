@@ -6,7 +6,8 @@ import { readPreference, writePreference } from "../lib/preferences";
 export function ThemeController({ children }: { children: ReactNode }) {
   const [mode, update] = useState<ThemeMode>(() => {
     const saved = readPreference("dex-theme");
-    return saved === "dark" || saved === "light" ? saved : "auto";
+    if (saved === "dark" || saved === "light" || saved === "auto") return saved;
+    return "dark";
   });
   const apply = useSetColorMode();
   useEffect(() => {

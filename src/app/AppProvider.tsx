@@ -12,7 +12,7 @@ import { retryDelay, retryRead } from "../lib/retry";
 setBooleanFeatureFlagResolver(() => false);
 
 function DesignProvider({ children }: { children: ReactNode }) {
-  return <AtlaskitProvider defaultColorMode="auto">
+  return <AtlaskitProvider defaultColorMode="dark">
     <ThemeController>{children}</ThemeController>
   </AtlaskitProvider>;
 }

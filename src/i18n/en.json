@@ -293,5 +293,18 @@
   "authFailed": "Sign-in did not complete. Try signing in again.",
   "authUnavailable": "The sign-in service is unavailable. Try again.",
   "recentMfa": "Verify your identity again, then review and submit the command.",
-  "authForbidden": "Your account does not have permission for this action."
+  "authForbidden": "Your account does not have permission for this action.",
+  "kill": "Kill",
+  "killTitle": "Kill switch",
+  "killPause": "Pause entries only",
+  "killFlatten": "Full stop — pause and close all",
+  "typeKill": "Type KILL",
+  "palette": "Command palette",
+  "palettePlaceholder": "Search commands",
+  "groupLive": "Live",
+  "groupAnalysis": "Analysis",
+  "groupControl": "Control",
+  "groupSystem": "System",
+  "shortcuts": "Shortcuts",
+  "entriesOn": "Entries on"
 }
