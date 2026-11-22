@@ -19,7 +19,7 @@ type Session = {
   refreshing?: Promise<void>;
 };
 
-const reads = /^\/api\/v1\/(health|status|positions|equity|audit|candidates|risk|mode|chain|budget|signals|providers(?:\/[\w-]{1,100})?|strategies(?:\/[\w-]{1,100})?)$/;
+const reads = /^\/api\/v1\/(health|status|positions|wallets|equity|audit|candidates|risk|mode|chain|budget|signals|providers(?:\/[\w-]{1,100})?|strategies(?:\/[\w-]{1,100})?)$/;
 const writes = /^\/api\/v1\/(controls\/(pause|resume|risk|exit|reject|live-execution|chain|(?:approve|reject)\/[\w-]{1,100})|mode|chain|budget|(?:providers|strategies)\/[\w-]{1,100}\/(?:enable|disable)|strategies\/(?:reload|[\w-]{1,100}\/params))$/;
 
 function allowed(method: string | undefined, path: string) {

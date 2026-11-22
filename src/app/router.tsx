@@ -7,6 +7,7 @@ import { ErrorBoundary, Loading } from "../ui/Feedback";
 
 const Overview = lazy(() => import("../features/overview/Overview"));
 const Positions = lazy(() => import("../features/positions/Positions"));
+const Wallets = lazy(() => import("../features/wallets/Wallets"));
 const Candidates = lazy(() => import("../features/candidates/Candidates"));
 const Performance = lazy(() => import("../features/performance/Performance"));
 const Audit = lazy(() => import("../features/audit/Audit"));
@@ -18,6 +19,7 @@ const Settings = lazy(() => import("../features/settings/Settings"));
 export const pages = [
   { path: "/", label: "overview", Component: Overview },
   { path: "/positions", label: "positions", Component: Positions },
+  { path: "/wallets", label: "wallets", Component: Wallets },
   { path: "/candidates", label: "candidates", Component: Candidates, expert: true },
   { path: "/performance", label: "performance", Component: Performance, expert: true },
   { path: "/audit", label: "audit", Component: Audit },

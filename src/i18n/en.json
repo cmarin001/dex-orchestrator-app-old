@@ -306,5 +306,16 @@
   "groupControl": "Control",
   "groupSystem": "System",
   "shortcuts": "Shortcuts",
-  "entriesOn": "Entries on"
+  "entriesOn": "Entries on",
+  "wallets": "Wallets",
+  "walletTier": "Funding tier",
+  "walletFundable": "Fundable",
+  "walletTracked": "Tracked",
+  "walletValidation": "Validation only",
+  "walletBalance": "Native balance",
+  "walletAddress": "Public address",
+  "walletBlocked": "Funding unavailable for this chain",
+  "walletNeedsVerification": "Verify the signer before funding",
+  "walletConnect": "Connect to TradeKeel to view the wallet overview.",
+  "walletCopyDeposit": "Copy deposit address"
 }
