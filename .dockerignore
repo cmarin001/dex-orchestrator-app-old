@@ -1,0 +1,13 @@
+*
+!package.json
+!package-lock.json
+!index.html
+!tsconfig.json
+!vite.config.ts
+!public/
+!public/**
+!src/
+!src/**
+!deploy/
+!deploy/container/
+!deploy/container/default.conf

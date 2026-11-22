@@ -1,7 +1,5 @@
-import type { Equity, JournalEvent, LiveView, RiskResponse, TradeHistoryRow, TradePage } from "./types";
+import type { Candidates, Equity, JournalEvent, LiveView, Position, RiskResponse, Status, TradeHistoryRow, TradePage } from "./types";
 
-export const sampleSession = Symbol("sample dashboard");
-export type DashboardSession = string | typeof sampleSession;
 const asOf = Date.now();
 const entryAt = asOf - 750_000;
 const market = { chain: "solana", token: "SOL-DEMO", pair: "SOL-USDC-DEMO" } as const;
@@ -20,8 +18,9 @@ export const samplePositions: LiveView[] = [{
   target_series: [{ t: entryAt, price: 152.25 }, { t: entryAt + 600_000, price: 148.625 },
     { t: asOf, price: 148.625 }],
 }];
-const equity: Equity = { current_equity: 101350, realized_cents: 1234, committed_cents: 7500, open_positions: 1 };
-const risk: RiskResponse = { as_of: asOf, actor: "sample", editable: false, config: {
+const latest = { equity_usd: 1013.5, drawdown_pct: .013, win_rate: .75, expectancy_usd: 2.55, trades_closed: 4, as_of: asOf };
+const equity: Equity = { latest, history: [latest, { ...latest, equity_usd: 1009.75, trades_closed: 3, as_of: asOf - 43_200_000 }] };
+const risk: RiskResponse = { as_of: asOf, actor: "sample", config: {
   max_risk_pct_per_trade: .02, max_position_vs_pool_depth: .015, max_slippage_bps: 150,
   halt_new_entries_dd: .15, timeout_ladder: ladder,
 } };
@@ -38,15 +37,20 @@ const trades: TradeHistoryRow[] = Array.from({ length: 4 }, (_, i) => {
 
 export function sampleResponse(path: string): unknown {
   const url = new URL(path, "https://sample.invalid");
-  if (url.pathname === "/equity") return equity;
-  if (url.pathname === "/risk-config") return risk;
-  if (url.pathname === "/journal") {
-    const id = url.searchParams.get("run_id");
-    if (!id) return [scan];
-    const trade = trades.find(row => row.run_id === id);
-    return trade ? [{ at: new Date(trade.exit_at).toISOString(), stage: "executor", status: "paper_close",
-      gaps: [], detail: trade }] satisfies JournalEvent[] : [];
+  if (url.pathname === "/api/v1/health") return { status: "ok", mode: "paper", journal_readable: true };
+  if (url.pathname === "/api/v1/status") return { loop_state: "running", last_cycle_at: new Date().toISOString(), breaker_open: false, breaker_until: null, entries_paused: false, execution_mode: "paper", live_execution_enabled: false, open_positions: 1, current_equity: 1013.5, drawdown_pct: .013 } satisfies Status;
+  if (url.pathname === "/api/v1/positions") return { items: [position] };
+  if (url.pathname === "/api/v1/audit") {
+    const events: JournalEvent[] = [scan, ...trades.map(trade => ({ at: new Date(trade.exit_at).toISOString(), stage: "executor", status: "paper_close", gaps: [], identity: trade, detail: trade }))];
+    const since = url.searchParams.get("since");
+    const limit = Number(url.searchParams.get("limit") ?? 50);
+    const end = Number(url.searchParams.get("cursor") ?? 0) + limit;
+    const filtered = events.filter(event => !since || event.at >= since);
+    return { items: filtered.slice(end - limit, end), next_cursor: end < filtered.length ? end : null };
   }
+  if (url.pathname === "/live-view") return samplePositions;
+  if (url.pathname === "/api/v1/equity") return equity;
+  if (url.pathname === "/api/v1/risk") return risk;
   if (url.pathname === "/trades") {
     const from = url.searchParams.get("from");
     const to = url.searchParams.get("to");
@@ -57,6 +61,18 @@ export function sampleResponse(path: string): unknown {
     });
     return { items, next_cursor: null } satisfies TradePage;
   }
-  if (url.pathname === "/health") return { status: "ok", mode: "sample" };
+  if (url.pathname === "/api/v1/candidates") return candidates;
   throw new Error("Unavailable in sample mode");
 }
+
+const position: Position = {
+  ...market, run_id: "sample-open", cost_cents: 7500, entry_price_usd: 145,
+  size_usd: 75, size_tokens: 75 / 145, age_sec: (asOf - entryAt) / 1000,
+  mark: series.at(-1) ?? null, unrealized_pnl_usd: 75 * ((series.at(-1)?.price ?? 145) / 145 - 1),
+  exit_policy: samplePositions[0].policy,
+};
+const candidates: Candidates = {
+  watched: [market], scanner: [{ ...market, run_id: "sample-scanner", discovered_at: asOf,
+    trigger: "new_pair", liquidity_usd: 147_300, vol_1h_usd: 58_100, age_sec: 2430, rank_score: .3944,
+    reason: "Sample market passed the discovery filters.", skipped: false }],
+};
