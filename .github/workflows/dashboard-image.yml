@@ -24,7 +24,7 @@ jobs:
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:8081/assets/missing.js)" = 404
       - name: Save image
         run: docker image save "$DASHBOARD_IMAGE" | gzip > dashboard-image.tar.gz
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dashboard-image-${{ github.sha }}
           path: dashboard-image.tar.gz
