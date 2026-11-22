@@ -10,7 +10,7 @@
 !src/**
 !deploy/
 !deploy/container/
-!deploy/container/default.conf
+!nginx.conf
 !tsconfig.bff.json
 !bff/
 !bff/*.ts

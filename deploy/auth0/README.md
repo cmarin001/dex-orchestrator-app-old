@@ -13,8 +13,9 @@ Use separate tenants for staging and production. For each tenant:
 
 1. Create a **Regular Web Application** with token endpoint authentication
    set to **Basic** (client secret). Enable Authorization Code and Refresh
-   Token grants. Register only the exact HTTPS callback, for example
-   `https://staging-dashboard.tradekeel.example/auth/callback`.
+   exact HTTPS callback. Production is
+   `https://dex-orchestrator.best/auth/callback`. Use the staging hostname
+   for the staging tenant.
 2. Register a custom API with the identifier matching `AUTH0_AUDIENCE`.
    Select RS256 and the **RFC 9068** access-token profile. Set the API
    token lifetime to 600 seconds. The API rejects access tokens whose
@@ -56,7 +57,8 @@ and [refresh token metadata](https://support.auth0.com/center/s/article/question
    Use a paper worker and a separate staging journal. Keep the existing
    shared-token secret during migration.
 2. In this repo, copy the documented settings from [.env.example](../../.env.example)
-   into a deployment `.env`. Set `VITE_DASHBOARD_AUTH_MODE=auth0`.
+   into a deployment `.env`. Set `VITE_DASHBOARD_AUTH_MODE=auth0`. Production uses
+   `BFF_PUBLIC_ORIGIN=https://dex-orchestrator.best`.
    The browser build needs no issuer, secret, API token or tenant claims.
    Mount the Auth0 client secret from a mode-600 file owned by the UID
    used by the BFF service. Set `BFF_UID` / `BFF_GID` as needed (default
