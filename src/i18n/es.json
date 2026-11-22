@@ -286,5 +286,12 @@
   "approve": "Aprobar señal",
   "rejectSignal": "Rechazar señal",
   "noRecords": "No hay registros disponibles",
-  "noActivity": "No hay solicitudes en esta sesión"
+  "noActivity": "No hay solicitudes en esta sesión",
+  "signIn": "Iniciar sesión",
+  "signOut": "Cerrar sesión",
+  "authConnect": "Inicia sesión con Auth0 para conectarte a TradeKeel.",
+  "authFailed": "No se completó el inicio de sesión. Inténtalo de nuevo.",
+  "authUnavailable": "El servicio de autenticación no está disponible. Inténtalo de nuevo.",
+  "recentMfa": "Vuelve a verificar tu identidad, revisa el comando y envíalo.",
+  "authForbidden": "Tu cuenta no tiene permiso para realizar esta acción."
 }

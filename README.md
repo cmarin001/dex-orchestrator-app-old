@@ -3,7 +3,7 @@
 A standalone Vite, React, and TypeScript control surface for the
 [DEX orchestrator](https://github.com/cmarin001/dex-orchestrator). The first
 visit opens a read-only sample dashboard. Connect to see and control a worker
-with a dashboard bearer token. The app uses Atlaskit (ADS), English and
+with a dashboard bearer token in legacy mode or Auth0 in Phase 5. The app uses Atlaskit (ADS), English and
 Spanish catalogs, and light, dark, and system themes.
 
 **Simple** mode shows overview, read-only positions and risk, 20 recent
@@ -24,14 +24,14 @@ npm run build
 npm test
 ```
 
-The bearer stays in memory and is sent in the Authorization header for REST
+In legacy mode, the bearer stays in memory and is sent in the Authorization header for REST
 and the price stream. Reloading a connected tab opens Connect and requires the
 bearer again. Only a credential-free screen flag stays in the browser tab.
 Theme, language, and display mode are stored in preference cookies. Keep the
 DASHBOARD_API_TOKEN, provider keys, and wallet keys out of `VITE_*` variables
 and the app directory.
 
-## Deploy to the DigitalOcean droplet
+## Deploy to the DigitalOcean droplet in legacy mode
 
 The dashboard image serves static files as a non-root user. Compose publishes
 it only at `127.0.0.1:8081`. Host Nginx serves HTTPS and proxies the REST API,
@@ -83,3 +83,10 @@ image tag. Keep the previous image available until verification is complete.
 - Risk history comes from audit pages loaded on demand. Trade-derived
   statistics describe the trade pages loaded so far. Starting equity and
   average slippage display as unavailable when the REST contract omits them.
+
+## Phase 5 authentication
+
+The [Auth0 deployment and staging checklist](deploy/auth0/README.md)
+covers the optional server-side login profile and the corresponding
+orchestrator API settings. The existing Compose path remains available
+for deployments in legacy mode.

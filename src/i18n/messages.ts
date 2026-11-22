@@ -3,6 +3,13 @@ import en from "./en.json";
 
 export type MessageId = keyof typeof en;
 export const messages = defineMessages({
+  signIn: { id: "signIn", defaultMessage: en.signIn },
+  signOut: { id: "signOut", defaultMessage: en.signOut },
+  authConnect: { id: "authConnect", defaultMessage: en.authConnect },
+  authFailed: { id: "authFailed", defaultMessage: en.authFailed },
+  authUnavailable: { id: "authUnavailable", defaultMessage: en.authUnavailable },
+  recentMfa: { id: "recentMfa", defaultMessage: en.recentMfa },
+  authForbidden: { id: "authForbidden", defaultMessage: en.authForbidden },
   app: { id: "app", defaultMessage: en.app },
   dashboard: { id: "dashboard", defaultMessage: en.dashboard },
   overview: { id: "overview", defaultMessage: en.overview },

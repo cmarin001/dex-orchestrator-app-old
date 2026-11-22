@@ -286,5 +286,12 @@
   "approve": "Approve signal",
   "rejectSignal": "Reject signal",
   "noRecords": "No records available",
-  "noActivity": "No commands submitted in this session"
+  "noActivity": "No commands submitted in this session",
+  "signIn": "Sign in",
+  "signOut": "Sign out",
+  "authConnect": "Sign in with Auth0 to connect to TradeKeel.",
+  "authFailed": "Sign-in did not complete. Try signing in again.",
+  "authUnavailable": "The sign-in service is unavailable. Try again.",
+  "recentMfa": "Verify your identity again, then review and submit the command.",
+  "authForbidden": "Your account does not have permission for this action."
 }

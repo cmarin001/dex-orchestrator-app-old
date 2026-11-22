@@ -5,6 +5,7 @@ services:
       context: .
       args:
         VITE_EXPECTED_CYCLE_INTERVAL_MS: ${VITE_EXPECTED_CYCLE_INTERVAL_MS:-90000}
+        VITE_DASHBOARD_AUTH_MODE: ${VITE_DASHBOARD_AUTH_MODE:-legacy}
     ports:
       - "127.0.0.1:8081:8080"
     read_only: true
@@ -19,3 +20,36 @@ services:
       timeout: 3s
       retries: 3
       start_period: 5s
+
+  bff:
+    profiles: [auth0]
+    image: ${BFF_IMAGE:-dex-orchestrator-bff:local}
+    build:
+      context: .
+      target: bff
+    network_mode: host
+    environment:
+      BFF_HOST: 127.0.0.1
+      BFF_PORT: "8082"
+      BFF_PUBLIC_ORIGIN: ${BFF_PUBLIC_ORIGIN:-}
+      BFF_API_ORIGIN: ${BFF_API_ORIGIN:-http://127.0.0.1:8787}
+      AUTH0_ISSUER: ${AUTH0_ISSUER:-}
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE:-}
+      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID:-}
+      AUTH0_CLIENT_SECRET_FILE: /run/secrets/auth0_client_secret
+    secrets: [auth0_client_secret]
+    user: "${BFF_UID:-1000}:${BFF_GID:-1000}"
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8082/healthz').then(r=>{if(!r.ok)process.exitCode=1}).catch(()=>{process.exitCode=1})"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+secrets:
+  auth0_client_secret:
+    file: ${AUTH0_CLIENT_SECRET_PATH:-./secrets/auth0_client_secret.txt}

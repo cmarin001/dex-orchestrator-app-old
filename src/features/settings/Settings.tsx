@@ -3,6 +3,8 @@ import { useId, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "@atlaskit/button/new";
 import { Inline, Text } from "@atlaskit/primitives";
+import { AuthControls } from "../connect/AuthControls";
+import { auth0Enabled } from "../../api/auth-mode";
 import { configuredOrigin } from "../../api/client";
 import { useConnection } from "../../app/Connection";
 import { useMessage } from "../../i18n/messages";
@@ -30,15 +32,17 @@ export default function Settings() {
     </Panel>
     <Panel title="language"><Preferences section="language" /></Panel>
     <Panel title="connection">
-      {mode === "expert" && <Text>{session.kind === "connected" ? session.origin : configuredOrigin()}</Text>}
-      <Inline space="space.100" shouldWrap>
-        <Button appearance="subtle" onClick={change}>{m(session.kind === "connected" ? "disconnect" : "connect")}</Button>
-        {mode === "expert" && session.kind === "connected" &&
-          <Button appearance="subtle" onClick={() => setEditing(true)}>{m("editOrigin")}</Button>}
-      </Inline>
-      <ConfirmDialog open={editing} title="editOrigin" help="editOriginHelp"
-        current={<Text>{session.kind === "connected" ? session.origin : configuredOrigin()}</Text>}
-        onCancel={() => setEditing(false)} onConfirm={change} />
+      {auth0Enabled() ? <AuthControls /> : <>
+        {mode === "expert" && <Text>{session.kind === "connected" ? session.origin : configuredOrigin()}</Text>}
+        <Inline space="space.100" shouldWrap>
+          <Button appearance="subtle" onClick={change}>{m(session.kind === "connected" ? "disconnect" : "connect")}</Button>
+          {mode === "expert" && session.kind === "connected" &&
+            <Button appearance="subtle" onClick={() => setEditing(true)}>{m("editOrigin")}</Button>}
+        </Inline>
+        <ConfirmDialog open={editing} title="editOrigin" help="editOriginHelp"
+          current={<Text>{session.kind === "connected" ? session.origin : configuredOrigin()}</Text>}
+          onCancel={() => setEditing(false)} onConfirm={change} />
+      </>}
     </Panel>
   </PageShell>;
 }
